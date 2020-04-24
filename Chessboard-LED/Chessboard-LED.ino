@@ -70,17 +70,17 @@ void writeSR(int data_pin, int clk_pin, int values[8]) {
 }
 
 /*
- * col_data_pins: one-dimensional int array of SCAN_RATE * SIZE / 8 size. Contains the pins for col SRs, in same order as reading english
- * col_data: one-dimensional int array of SCAN_RATE * SIZE size, contains the data for columns, in same order as reading english. 
+ * col_data_pins: one-dimensional int array of SCAN_RATE * SIZE / 8 size. Contains the pins for col SRs, in same order as reading english (left-right, up-down)
+ * col_data: one-dimensional int array of SCAN_RATE * SIZE size, contains the data for columns, in same order as reading english (left-right, up-down)
  *  This is gonna be a long one, so don't mess up! (These should all be 1s or 0s)
  * col_clk: int, it's. It's the pin that the column SRs use for clk. Duh. 
- * 
+ * row_data_pins: one-dimensional int array of SIZE / SCAN_RATE / 8 size. Pins each row SR uses for data. 
+ * row_num: which row in each set of rows is supposed to be on. So, for SCAN_RATE = 4, size = 32, row_num = 0, rows 1, 9, 17, and 25 would be enabled. (if we started counting rows at 1, anyway)
  */
  
-void lightRow(int col_data_pins[], int col_data[], col_clk) {
+void lightRow(int col_data_pins[], int col_data[], col_clk, int row_data_pins[], int row_num, int row_clk, int row_reset) {
   /*
    * I couldn't figure out how to write this in words, so... pseudocode passed off as real code.
-   * I don't know exactly how all of this data should be passed in, is the thing. 
    */
    for (int i = 0; i < 8; i++) {
     //write the data for this bit to the column SRs
