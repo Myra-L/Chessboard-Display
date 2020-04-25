@@ -1,14 +1,14 @@
 #include <timer.h>
 
 /*
-   Define an array of pixel_amt / 8.0 round_up arrays, each being 8. That way we can just map stuff into them, solves our problem of using shift registers pretty easy.
-   Modular in size, NOT in technology: using 8-bit shift-registers of the same type I used is required. This means many items must be multiples of 8.
-   Plan: every 25 milliseconds, call a function. That function calls a bunch of smaller functions, each of which enable the LEDs for a single row (or set of such).
-   2nd-layer function is on a timer to call its new function every 25ms / # of rows in set.
-   3rd-layer function just gets all of its stuff arranged then returns. That way we don't have to deal with blocking delays or anything.
-   The problem then, is making sure that everything both enters on time and exits on time.
-
+  Modular in size, NOT technology: must use the same SRs I'm using (or... close to it, I guess. I'll find the exact model and upload the datasheet later. 
+  SO, the plan is to use a pretty simple timer library to call our lightRow every so often, with the serialRead function being called even less often.
+  Originally the plan was to have a special time in each loop (or maybe every second, idk) set aside for serial reading
+    but this way we can do serial reading while the LEDs would be delaying anyway. It's more efficient. I just hope it works c:
 */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Constant definition 
 
 #define NUM_SRS 1
 #define SCAN_RATE 4 //This is the number of rows that will be on at any given point. So, SCAN_RATE = 4, and SIZE = 64, would be equivalent to a 1:16 scan rate.
@@ -31,29 +31,13 @@ const int col_data_pins[SIZE / SCAN_RATE][SIZE / 8] = {
 const int col_clk = 35; //all columns use the same clock. They do NOT use the same clock as the rows, as doing that would be catastrophic during setup.
 const int col_reset = -1; //columns should remain *high* when off, and SR's reset brings them to low. So connect their reset pin to Vdd
 
-void boardCycle(void *) {
-  //DO SOMETHING TO RECEIVE THE INPUT FROM THE PI
-  //DO THAT RIGHT HERE
-  //WITH SERIAL INPUT OR SOMETHING
+int test_serial[SIZE * SCAN_RATE] = {};
 
+Timer<5, micros> over_timer;
 
-}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Function definition
 
-void setup() {
-  Serial.begin(57600);
-  digitalWrite(LED_BUILTIN, LOW);
-  for (int i = 5; i < 52; i++) {
-    //set all GPIO pins to be output. Just for now; I'll figure out which ones need to be input later c:
-    pinMode(i, OUTPUT);
-  }
-
-  Timer<5> first_timer;
-  //first_timer.every(PERIOD, fullCycle);
-}
-
-void loop() {
- // 1st_timer.tick();
-}
 
 //A function that probably won't be used, writes the needed values of a single SR. 
 //This probably won't be used, because having a seperate delay cycle for each SR is super inefficient.
@@ -70,35 +54,114 @@ void writeSR(int data_pin, int clk_pin, int values[8]) {
 }
 
 /*
- * col_data_pins: one-dimensional int array of SCAN_RATE * SIZE / 8 size. Contains the pins for col SRs, in same order as reading english (left-right, up-down)
+ * The struct used to pass arguments into lightRow. 
  * col_data: one-dimensional int array of SCAN_RATE * SIZE size, contains the data for columns, in same order as reading english (left-right, up-down)
  *  This is gonna be a long one, so don't mess up! (These should all be 1s or 0s)
- * col_clk: int, it's. It's the pin that the column SRs use for clk. Duh. 
- * row_data_pins: one-dimensional int array of SIZE / SCAN_RATE / 8 size. Pins each row SR uses for data. 
  * row_num: which row in each set of rows is supposed to be on. So, for SCAN_RATE = 4, size = 32, row_num = 0, rows 1, 9, 17, and 25 would be enabled. (if we started counting rows at 1, anyway)
+ * iteration: int, the # of times lightRow has been called in this board-wide cycle. IE: when this reaches 15, we're gonna start over at 1. (Might be able to just use row_num for this?
  */
- 
-void lightRow(int col_data_pins[], int col_data[], col_clk, int row_data_pins[], int row_num, int row_clk, int row_reset) {
-  /*
-   * I couldn't figure out how to write this in words, so... pseudocode passed off as real code.
-   */
-   for (int i = 0; i < 8; i++) {
-    //write the data for this bit to the column SRs
-    for (int j = 0; j < SIZE / 8; j++) {
-      digitalWrite(col_data_pins[j], col_data[i + j*8]);
-    }
-    //Is this the row that's supposed to be on? if yes, write HIGH, if no, write LOW.
-    int row_write = (i == (row_num % 8) ? 1 : 0);
-    digitalWrite(row_data_pins[row_num / 8], row_write);
+struct rowArgs {
+  int* col_data;
+  int row_num;
+  int iteration;
+  int col_data_count;
 
-    digitalWrite(row_clk, LOW);
-    digitalWrite(col_clk, LOW);
-    delayMicroseconds(4);
-    digitalWrite(row_clk, HIGH);
-    digitalWrite(col_clk, HIGH);
-    delayMicroseconds(4);
+  rowArgs(int c[SIZE*SCAN_RATE] = {}, int r = 0, int i = 0, int count = SIZE * SCAN_RATE) : row_num(r), iteration(i), col_data_count(count) {
+    col_data = new int[col_data_count];
+    memcpy(col_data, c, sizeof(c[0]) * count);
+  };
+};
+
+bool lightRow(void* arg) {
+  /*
+  * I couldn't figure out how to write this in words, so... pseudocode passed off as real code.
+  */
+  //reset the rows, that way we 1:don't have to care what the rows were set to before! 2: Hopefully limit glitchiness caused by not bothering to reset our columns. 
+  digitalWrite(row_reset, LOW);
+  delayMicroseconds(5);
+  digitalWrite(row_reset, HIGH);
+  delayMicroseconds(5);
+  
+  rowArgs* args = (rowArgs*)arg;
+  for (int i = 0; i < 8; i++) {
+    //write the data for this bit to the column SRs
+    int row_write = (i == (args->row_num % 8) ? 1 : 0);
+    digitalWrite(row_data_pins[args->row_num / 8], row_write); //if 1-8, write to the first pin. If 9-16, write to second pin. If we were doing SCAN_RATE = 2, SIZE = 32
     
-   }
+    for (int j = 0; j < SIZE / 8; j++) {
+      digitalWrite(col_data_pins[j], args->col_data[i + j*8]);
+    }
+  }
+  //Is this the row that's supposed to be on? if yes, write HIGH, if no, write LOW.
+  
+  digitalWrite(row_clk, LOW);
+  digitalWrite(col_clk, LOW);
+  delayMicroseconds(4);
+  digitalWrite(row_clk, HIGH);
+  digitalWrite(col_clk, HIGH);
+  delayMicroseconds(4);
+  
+  //commented-out bit would be used if we had a function over this, controlling it. 
+  /* if (args->iteration >= SIZE / SCAN_RATE)
+    return false;
+  else 
+    return true;
+  }*/
+  args->row_num = (args->row_num + 1) % (SIZE / SCAN_RATE); //iterate the row count right here in the row function!! No gods, no masters! (disclaimer I'm not a libertarian)
+  return true;
+}
+
+void initialRead() {
+  //run this before we start the timer. This should block everything until we get a serial input from the Leader.
+  //After that's received, write some stuff to our rowArgs pointer (which should be a global variable, I think.)
+  //Then we can start our timer and let everything else run automatically basically. 
+}
+
+bool loopRead(void* arg) {
+  //this is our serial reader that will be ran every... idk, quarter of a second or something? Depends on how fast I can figure out to make the serial reading.
+  //Read stuff from the Leader, put it in our rowArgs struct. 
+  //Make sure to include a provision for restarting !
+  //... wait, do we really need to? Cuz in that case we kinda just wait for more input from the Leader. This is just a video display, after all! 
+  
+  rowArgs* args = (rowArgs*)arg;
+  //iteration isn't being used anyway, so I'm gonna go ahead and use it here to test out my stuff. We'll see how it goes! Yay:)
+  args->iteration = (args->iteration + 1)
+  for (int i = 0; i < args->col_data_count; i++) {
+    args->col_data[i] = (args->col_data[i]+1) % 2
+  }
+
+  return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Actual functions that do actions
+
+void setup() {
+  Serial.begin(57600);
+  digitalWrite(LED_BUILTIN, LOW);
+  for (int i = 5; i < 52; i++) {
+    //set all GPIO pins to be output. Just for now; I'll figure out which ones need to be input later c:
+    pinMode(i, OUTPUT);
+  }
+
+  for (int i = 0; i < SIZE; i++) {
+   test_serial[i*8 + 0] = (i + 1) % 2;
+   test_serial[i*8 + 1] = (i) % 2;
+   test_serial[i*8 + 2] = (i + 1) % 2;
+   test_serial[i*8 + 3] = (i) % 2;
+    test_serial[i*8 + 4] = (i + 1) % 2;
+   test_serial[i*8 + 5] = (i) % 2;
+   test_serial[i*8 + 6] = (i + 1) % 2;
+   test_serial[i*8 + 7] = (i) % 2;
+  }
+  struct rowArgs row_args;
+  initialRead();
+  over_timer.every(ROW_PERIOD, lightRow, (void*) &row_args);
+  over_timer.every(250000, loopRead, (void*) &row_args);
+}
+
+void loop() {
+  over_timer.tick();
 }
 
 
