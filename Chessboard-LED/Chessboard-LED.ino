@@ -1,4 +1,4 @@
-#include <timer.h>
+  #include <timer.h>
 
 /*
   Modular in size, NOT technology: must use the same SRs I'm using (or... close to it, I guess. I'll find the exact model and upload the datasheet later. 
@@ -11,33 +11,78 @@
 //Constant definition 
 
 #define NUM_SRS 1
-#define SCAN_RATE 4 //This is the number of rows that will be on at any given point. So, SCAN_RATE = 4, and SIZE = 64, would be equivalent to a 1:16 scan rate.
-#define SIZE 32 //Number of LEDs in each row and column.
+#define SCAN_RATE 1 //This is the number of rows that will be on at any given point. So, SCAN_RATE = 4, and SIZE = 64, would be equivalent to a 1:16 scan rate.
+#define SIZE 16 //Number of LEDs in each row and column.
+#define ROW_GROUP_SIZE 16 //number of Rows in a group of rows. IE: SIZE / SCAN_RATE
 #define FREQUENCY 40 //Frequency of the display, in Hz (board-cycle)
-#define PERIOD 1 / FREQUENCY //Time for each board-cycle
-#define ROW_PERIOD 1 / ((SIZE / SCAN_RATE) * FREQUENCY) //Time for each row-cycle. Or... time each set of SCAN_RATE rows has to do its thing. 
+#define PERIOD (1 / FREQUENCY) //Time for each board-cycle
+#define ROW_PERIOD (1 / ((ROW_GROUP_SIZE) * FREQUENCY)) //Time for each row-cycle. Or... time each set of SCAN_RATE rows has to do its thing. 
 
 //Row SRs are assumed to be wired together where possible. EG: Scan rate=4, size=32, We will only have 2 SR signal pins, as every second SR will be wired together.
-const int row_data_pins[SIZE / SCAN_RATE] = {22, 23, 24, 25};
+const int row_data_pins[SIZE / SCAN_RATE] = {22, 23};
 const int row_clk = 26;
 const int row_reset = 36; //Row gets its own reset pin, because its reset button is actually useful.
 
 //Column-data pins are organized by set of SRs, then by # within that set.
 //EX: a 1:8 scan rate 64x64 matrix would have 8 sets of column SRs, as it has 8 lines on at any given time.
-const int col_data_pins[SIZE / SCAN_RATE][SIZE / 8] = {
-  {27, 28, 29, 30},
-  {31, 32, 33, 34}
+const int col_data_pins[SIZE / ROW_GROUP_SIZE][SIZE / 8] = {
+  {27, 28}
 };
 const int col_clk = 35; //all columns use the same clock. They do NOT use the same clock as the rows, as doing that would be catastrophic during setup.
-const int col_reset = -1; //columns should remain *high* when off, and SR's reset brings them to low. So connect their reset pin to Vdd
+const int col_reset = -1; //columns shou  ld remain *high* when off, and SR's reset brings them to low. So connect their reset pin to Vdd
 
-int test_serial[SIZE * SCAN_RATE] = {};
+//used for testing, hence the name
+int test_serial[SIZE * SIZE] = {
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+};
+
+/*int test_serial[SIZE * SIZE] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+};*/
 
 Timer<5, micros> over_timer;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Function definition
 
+//advances the SR with that clock pin by one cycle. 
+//Cuz GOD typing these four lines over and over got old. SHoulda done this sooner. 
+void advanceClock(int pin) {
+  digitalWrite(pin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(pin, HIGH);
+  delayMicroseconds(5);
+}
 
 //A function that probably won't be used, writes the needed values of a single SR. 
 //This probably won't be used, because having a seperate delay cycle for each SR is super inefficient.
@@ -46,10 +91,7 @@ void writeSR(int data_pin, int clk_pin, int values[8]) {
   digitalWrite(clk_pin, LOW);
   for (int i = 0; i < 8; i++) {
     digitalWrite(data_pin, values[i]) ;
-    digitalWrite(clk_pin, LOW);
-    delayMicroseconds(3);
-    digitalWrite(clk_pin, HIGH);
-    delayMicroseconds(3);
+    advanceClock(clk_pin);
   }
 }
 
@@ -66,40 +108,50 @@ struct rowArgs {
   int iteration;
   int col_data_count;
 
-  rowArgs(int c[SIZE*SCAN_RATE] = {}, int r = 0, int i = 0, int count = SIZE * SCAN_RATE) : row_num(r), iteration(i), col_data_count(count) {
+  rowArgs(int c[SIZE*SIZE] = {}, int r = 0, int i = 0, int count = SIZE * SIZE) : row_num(r), iteration(i), col_data_count(count) {
     col_data = new int[col_data_count];
     memcpy(col_data, c, sizeof(c[0]) * count);
   };
 };
 
 bool lightRow(void* arg) {
-  /*
-  * I couldn't figure out how to write this in words, so... pseudocode passed off as real code.
-  */
-  //reset the rows, that way we 1:don't have to care what the rows were set to before! 2: Hopefully limit glitchiness caused by not bothering to reset our columns. 
-  digitalWrite(row_reset, LOW);
-  delayMicroseconds(5);
-  digitalWrite(row_reset, HIGH);
-  delayMicroseconds(5);
-  
+  /*digitalWrite(row_reset, LOW);
+  advanceClock(row_clk);
+  digitalWrite(row_reset,HIGH);
+  advanceClock(row_clk);*/
   rowArgs* args = (rowArgs*)arg;
-  for (int i = 0; i < 8; i++) {
-    //write the data for this bit to the column SRs
-    int row_write = (i == (args->row_num % 8) ? 1 : 0);
-    digitalWrite(row_data_pins[args->row_num / 8], row_write); //if 1-8, write to the first pin. If 9-16, write to second pin. If we were doing SCAN_RATE = 2, SIZE = 32
-    
-    for (int j = 0; j < SIZE / 8; j++) {
-      digitalWrite(col_data_pins[j], args->col_data[i + j*8]);
+  int row_write;
+  for (int i = ROW_GROUP_SIZE-1; i >= 0; i++) {
+    if (args->row_num / 8 == i / 8) {
+      row_write = (i == (args->row_num) ? HIGH : LOW); //Are we on the row we need to be on? 
+      digitalWrite(row_data_pins[args->row_num / 8], row_write); //Integer division rounds down. 0-7=>0, 8-15=>1, etc.
+      advanceClock(row_clk);
+    } else {
+      //if we're not even in the right row SR's range, then just skip to the next iteration
+      continue;
     }
+    
   }
-  //Is this the row that's supposed to be on? if yes, write HIGH, if no, write LOW.
-  
-  digitalWrite(row_clk, LOW);
-  digitalWrite(col_clk, LOW);
-  delayMicroseconds(4);
-  digitalWrite(row_clk, HIGH);
-  digitalWrite(col_clk, HIGH);
-  delayMicroseconds(4);
+
+  int pin;
+  int on;
+  for (int k = 7; k >= 0; k--) {
+    for (int i = 0; i < SCAN_RATE; i++) {
+      for (int j = 0; j < (SIZE / 8); j++) {
+      
+        //If SCAN_RATE = 2, SIZE = 16, then we have to loop through 32 different pixels each cycle. 
+        //The inner 2 loops could probably be combined, I think this just seems easier. 
+          pin = col_data_pins[i][j];
+          on = args->col_data[i * SIZE + j * 8 + k]; //for the 30th pixel with above conditions, i = 1, j = 1, k = 5. I think.
+          digitalWrite(pin, on);
+          Serial.print(on);
+        }
+      Serial.write("\n");
+    } 
+    advanceClock(col_clk);
+    Serial.write("HONK\n");
+  }
+      
   
   //commented-out bit would be used if we had a function over this, controlling it. 
   /* if (args->iteration >= SIZE / SCAN_RATE)
@@ -107,28 +159,30 @@ bool lightRow(void* arg) {
   else 
     return true;
   }*/
-  args->row_num = (args->row_num + 1) % (SIZE / SCAN_RATE); //iterate the row count right here in the row function!! No gods, no masters! (disclaimer I'm not a libertarian)
+  args->row_num = (args->row_num + 1) % (ROW_GROUP_SIZE); //iterate the row count right here in the row function!! No gods, no masters! (disclaimer I'm not a libertarian)
   return true;
 }
 
 void initialRead() {
+  Serial.write("initialRead is running\n");
   //run this before we start the timer. This should block everything until we get a serial input from the Leader.
   //After that's received, write some stuff to our rowArgs pointer (which should be a global variable, I think.)
   //Then we can start our timer and let everything else run automatically basically. 
 }
 
 bool loopRead(void* arg) {
+  Serial.write("loopRead is running\n");
   //this is our serial reader that will be ran every... idk, quarter of a second or something? Depends on how fast I can figure out to make the serial reading.
   //Read stuff from the Leader, put it in our rowArgs struct. 
   //Make sure to include a provision for restarting !
   //... wait, do we really need to? Cuz in that case we kinda just wait for more input from the Leader. This is just a video display, after all! 
   
-  rowArgs* args = (rowArgs*)arg;
+  /*rowArgs* args = (rowArgs*)arg;
   //iteration isn't being used anyway, so I'm gonna go ahead and use it here to test out my stuff. We'll see how it goes! Yay:)
-  args->iteration = (args->iteration + 1)
+  args->iteration = (args->iteration + 1);
   for (int i = 0; i < args->col_data_count; i++) {
-    args->col_data[i] = (args->col_data[i]+1) % 2
-  }
+    args->col_data[i] = (args->col_data[i]+1) % 2;
+  }*/
 
   return true;
 }
@@ -144,19 +198,31 @@ void setup() {
     pinMode(i, OUTPUT);
   }
 
-  for (int i = 0; i < SIZE; i++) {
-   test_serial[i*8 + 0] = (i + 1) % 2;
-   test_serial[i*8 + 1] = (i) % 2;
-   test_serial[i*8 + 2] = (i + 1) % 2;
-   test_serial[i*8 + 3] = (i) % 2;
-    test_serial[i*8 + 4] = (i + 1) % 2;
-   test_serial[i*8 + 5] = (i) % 2;
-   test_serial[i*8 + 6] = (i + 1) % 2;
-   test_serial[i*8 + 7] = (i) % 2;
+  digitalWrite(row_reset, LOW);
+
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < ROW_GROUP_SIZE; j++) {
+      for (int k = 0; k < SIZE / 8; k++) {
+        digitalWrite(col_data_pins[j][k], HIGH);
+      }
+    }
+    advanceClock(col_clk);
   }
+
+  digitalWrite(row_reset, HIGH);
+  advanceClock(row_clk);
+  for (int i = 0; i < 10; i++) {
+    digitalWrite(row_data_pins[0], LOW);
+    digitalWrite(row_data_pins[1], LOW);
+    advanceClock(row_clk);
+    
+  }
+
   struct rowArgs row_args;
+  row_args.col_data = test_serial;
   initialRead();
-  over_timer.every(ROW_PERIOD, lightRow, (void*) &row_args);
+  
+  over_timer.every(750, lightRow, (void*) &row_args);
   over_timer.every(250000, loopRead, (void*) &row_args);
 }
 
