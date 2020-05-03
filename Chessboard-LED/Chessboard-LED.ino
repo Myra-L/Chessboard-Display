@@ -120,7 +120,7 @@ bool lightRow(void* arg) {
   digitalWrite(row_reset,HIGH);
   advanceClock(row_clk);*/
   rowArgs* args = (rowArgs*)arg;
-  int row_write;
+  auto row_write = LOW;
   for (int i = ROW_GROUP_SIZE-1; i >= 0; i++) {
     if (args->row_num / 8 == i / 8) {
       row_write = (i == (args->row_num) ? HIGH : LOW); //Are we on the row we need to be on? 
