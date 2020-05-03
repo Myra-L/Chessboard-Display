@@ -32,43 +32,43 @@ const int col_clk = 35; //all columns use the same clock. They do NOT use the sa
 const int col_reset = -1; //columns shou  ld remain *high* when off, and SR's reset brings them to low. So connect their reset pin to Vdd
 
 //used for testing, hence the name
-int test_serial[SIZE * SIZE] = {
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-};
-
 /*int test_serial[SIZE * SIZE] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
 };*/
+
+int test_serial[SIZE * SIZE] = {
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1,
+  1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 
+  0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1,
+};
 
 Timer<5, micros> over_timer;
 
@@ -79,9 +79,9 @@ Timer<5, micros> over_timer;
 //Cuz GOD typing these four lines over and over got old. SHoulda done this sooner. 
 void advanceClock(int pin) {
   digitalWrite(pin, LOW);
-  delayMicroseconds(5);
+  delayMicroseconds(3);
   digitalWrite(pin, HIGH);
-  delayMicroseconds(5);
+  delayMicroseconds(3);
 }
 
 //A function that probably won't be used, writes the needed values of a single SR. 
@@ -119,9 +119,31 @@ bool lightRow(void* arg) {
   advanceClock(row_clk);
   digitalWrite(row_reset,HIGH);
   advanceClock(row_clk);*/
+  //Serial.write("BEGINNING NEW RUN OF LIGHTROW \n\n");
+  digitalWrite(row_reset, LOW);
+  delayMicroseconds(4);
+  digitalWrite(row_reset, HIGH);
+  
   rowArgs* args = (rowArgs*)arg;
   auto row_write = LOW;
-  for (int i = ROW_GROUP_SIZE-1; i >= 0; i++) {
+
+  int pin;
+  int on;
+  for (int k = 7; k >= 0; k--) { //We have 8 bits on each SR, so loop 8 times, sleeping on each iteration
+    for (int i = 0; i < SCAN_RATE; i++) { //We'll have to write SCAN_RATE lines each cycle, so loop SCAN_RATE times. 
+      for (int j = 0; j < (SIZE / 8); j++) { //Again, SRs are 8 bits. This one's really just for convenience (essentially: loop X times, where X is # of SRs used for each line.)
+      
+        //If SCAN_RATE = 2, SIZE = 16, then we have to loop through 32 different pixels each cycle. 
+        //The inner 2 loops could probably be combined, I think this just seems easier. 
+          pin = col_data_pins[i][j];
+          on = (args->col_data[i * SIZE * ROW_GROUP_SIZE + SIZE * args->row_num + j * 8 + k] == 1 ? HIGH : LOW);
+          digitalWrite(pin, on);
+        }
+    } 
+    advanceClock(col_clk);
+  }
+      
+   for (int i = ROW_GROUP_SIZE-1; i >= 0; i--) {
     if (args->row_num / 8 == i / 8) {
       row_write = (i == (args->row_num) ? HIGH : LOW); //Are we on the row we need to be on? 
       digitalWrite(row_data_pins[args->row_num / 8], row_write); //Integer division rounds down. 0-7=>0, 8-15=>1, etc.
@@ -132,26 +154,6 @@ bool lightRow(void* arg) {
     }
     
   }
-
-  int pin;
-  int on;
-  for (int k = 7; k >= 0; k--) {
-    for (int i = 0; i < SCAN_RATE; i++) {
-      for (int j = 0; j < (SIZE / 8); j++) {
-      
-        //If SCAN_RATE = 2, SIZE = 16, then we have to loop through 32 different pixels each cycle. 
-        //The inner 2 loops could probably be combined, I think this just seems easier. 
-          pin = col_data_pins[i][j];
-          on = args->col_data[i * SIZE + j * 8 + k]; //for the 30th pixel with above conditions, i = 1, j = 1, k = 5. I think.
-          digitalWrite(pin, on);
-          Serial.print(on);
-        }
-      Serial.write("\n");
-    } 
-    advanceClock(col_clk);
-    Serial.write("HONK\n");
-  }
-      
   
   //commented-out bit would be used if we had a function over this, controlling it. 
   /* if (args->iteration >= SIZE / SCAN_RATE)
@@ -200,12 +202,12 @@ void setup() {
 
   digitalWrite(row_reset, LOW);
 
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < ROW_GROUP_SIZE; j++) {
-      for (int k = 0; k < SIZE / 8; k++) {
-        digitalWrite(col_data_pins[j][k], HIGH);
-      }
-    }
+    for (int k = 7; k >= 0; k--) {
+      for (int i = 0; i < SCAN_RATE; i++) {
+        for (int j = 0; j < (SIZE / 8); j++) {
+          digitalWrite(col_data_pins[i][j], LOW);
+        }
+      } 
     advanceClock(col_clk);
   }
 
@@ -222,8 +224,8 @@ void setup() {
   row_args.col_data = test_serial;
   initialRead();
   
-  over_timer.every(750, lightRow, (void*) &row_args);
-  over_timer.every(250000, loopRead, (void*) &row_args);
+  over_timer.every(100, lightRow, (void*) &row_args);
+  over_timer.every(500000, loopRead, (void*) &row_args);
 }
 
 void loop() {
