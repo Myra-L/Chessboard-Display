@@ -32,8 +32,8 @@ void setup() {
 
   digitalWrite(row_reset, HIGH);
   for (int i = 0; i < 10; i++) {
-    digitalWrite(row_data_pins[0], LOW);
-    digitalWrite(row_data_pins[1], LOW);
+    digitalWrite(row_data_pins[0], HIGH);
+    digitalWrite(row_data_pins[1], HIGH);
     digitalWrite(row_clk, LOW);
     delayMicroseconds(5);
     digitalWrite(row_clk, HIGH);

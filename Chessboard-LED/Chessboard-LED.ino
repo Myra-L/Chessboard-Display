@@ -120,13 +120,15 @@ bool lightRow(void* arg) {
   digitalWrite(row_reset,HIGH);
   advanceClock(row_clk);*/
   //Serial.write("BEGINNING NEW RUN OF LIGHTROW \n\n");
-  digitalWrite(row_reset, LOW);
-  delayMicroseconds(4);
-  digitalWrite(row_reset, HIGH);
+  
   
   rowArgs* args = (rowArgs*)arg;
   auto row_write = LOW;
 
+  digitalWrite(row_reset, LOW);
+  delayMicroseconds(4);
+  digitalWrite(row_reset, HIGH);
+  delayMicroseconds(4);
   int pin;
   int on;
   for (int k = 7; k >= 0; k--) { //We have 8 bits on each SR, so loop 8 times, sleeping on each iteration
@@ -142,14 +144,15 @@ bool lightRow(void* arg) {
     } 
     advanceClock(col_clk);
   }
-      
-   for (int i = ROW_GROUP_SIZE-1; i >= 0; i--) {
-    if (args->row_num / 8 == i / 8) {
-      row_write = (i == (args->row_num) ? HIGH : LOW); //Are we on the row we need to be on? 
-      digitalWrite(row_data_pins[args->row_num / 8], row_write); //Integer division rounds down. 0-7=>0, 8-15=>1, etc.
-      advanceClock(row_clk);
-    } else {
-      //if we're not even in the right row SR's range, then just skip to the next iteration
+
+  
+  for (int i = ROW_GROUP_SIZE-1; i >= 0; i--) {
+   if (args->row_num / 8 == i / 8) {
+     row_write = (i == (args->row_num) ? HIGH : LOW); //Are we on the row we need to be on? 
+     digitalWrite(row_data_pins[args->row_num / 8], row_write); //Integer division rounds down. 0-7=>0, 8-15=>1, etc.
+     advanceClock(row_clk);
+   } else {
+    //if we're not even in the right row SR's range, then just skip to the next iteration
       continue;
     }
     
@@ -224,7 +227,7 @@ void setup() {
   row_args.col_data = test_serial;
   initialRead();
   
-  over_timer.every(100, lightRow, (void*) &row_args);
+  over_timer.every(750, lightRow, (void*) &row_args);
   over_timer.every(500000, loopRead, (void*) &row_args);
 }
 
